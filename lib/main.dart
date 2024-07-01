@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_test_1/pages/camera_screen.dart';
 import 'package:flutter_test_1/pages/chatbot.dart';
 import 'package:flutter_test_1/pages/uploaded_image.dart';
 import 'package:image_picker/image_picker.dart';
@@ -30,23 +31,12 @@ class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   Future<void> _captureImage(BuildContext context) async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.camera);
-
-    if (pickedFile != null) {
-      // Navigate to UploadedImagePage with the captured image path
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => UploadedImagePage(
-            imagePath: pickedFile.path,
-            detectionResult: {},
-          ),
-        ),
-      );
-    } else {
-      print('No image captured.');
-    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const LiveDetectionPage(),
+      ),
+    );
   }
 
   Future<void> _selectImageFromGallery(BuildContext context) async {
@@ -216,7 +206,10 @@ class HomePage extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const ChatPage(disease: '',)),
+                  MaterialPageRoute(
+                      builder: (context) => const ChatPage(
+                            disease: '',
+                          )),
                 );
               },
               backgroundColor: Colors.transparent,
