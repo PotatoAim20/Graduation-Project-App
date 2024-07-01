@@ -19,11 +19,14 @@ String randomString() {
 }
 
 class ChatPage extends StatefulWidget {
-  const ChatPage({super.key});
+  final String disease; // Add this parameter to receive disease information
+
+  const ChatPage({super.key, required this.disease});
 
   @override
   State<ChatPage> createState() => _ChatPageState();
 }
+
 
 class _ChatPageState extends State<ChatPage> {
   final List<types.Message> _messages = [];
