@@ -51,7 +51,6 @@ class _UploadedImagePageState extends State<UploadedImagePage> {
 
       if (response.statusCode == 200) {
         final tmp = json.decode(responseBody);
-
         final data = json.decode(tmp) as Map<String, dynamic>;
 
         setState(() {
