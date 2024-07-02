@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_test_1/pages/camera_screen.dart';
 import 'package:flutter_test_1/pages/chatbot.dart';
 import 'package:flutter_test_1/pages/uploaded_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:easy_dynamic_theme/easy_dynamic_theme.dart';
 import 'package:zhi_starry_sky/starry_sky.dart';
 import 'package:custom_button_builder/custom_button_builder.dart';
+
+import 'pages/camera_screen.dart';
 
 void main() {
   runApp(EasyDynamicThemeWidget(child: const MyApp()));

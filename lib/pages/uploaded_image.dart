@@ -5,7 +5,7 @@ import 'package:flutter_test_1/pages/chatbot.dart';
 import 'package:http/http.dart' as http;
 import 'package:custom_button_builder/custom_button_builder.dart';
 import 'package:zhi_starry_sky/starry_sky.dart';
-// import 'package:image/image.dart' as img;
+import 'package:image/image.dart' as img; // Uncomment this import
 import 'dart:io';
 
 class UploadedImagePage extends StatefulWidget {
@@ -26,6 +26,7 @@ class _UploadedImagePageState extends State<UploadedImagePage> {
   String _predictedClass = ''; // To hold the predicted class
   double _confidence = 0.0; // To hold the confidence score
   Uint8List? _originalImage; // To hold the original image data
+  Uint8List? _preprocessedImage; // To hold the preprocessed image data
   List<double>? _boundingBox; // To hold the bounding box coordinates
   bool _isLoading = true; // To track loading state
 
@@ -51,6 +52,7 @@ class _UploadedImagePageState extends State<UploadedImagePage> {
 
       if (response.statusCode == 200) {
         final tmp = json.decode(responseBody);
+
         final data = json.decode(tmp) as Map<String, dynamic>;
 
         setState(() {
@@ -60,6 +62,33 @@ class _UploadedImagePageState extends State<UploadedImagePage> {
           _serverText = _predictedClass;
           _boundingBox = List<double>.from(data['Yolo result']['xyxy'][0]);
           _isLoading = false; // Set loading state to false when done
+
+          // Extract and convert the preprocessed image
+          final List<dynamic> preprocessedImageList =
+              data['preprocessd image'] ?? [];
+          if (preprocessedImageList.isNotEmpty) {
+            final int height = preprocessedImageList.length;
+            final int width = preprocessedImageList.isNotEmpty
+                ? preprocessedImageList[0].length
+                : 0;
+
+            final img.Image image = img.Image(width, height);
+
+            for (int y = 0; y < height; y++) {
+              for (int x = 0; x < width; x++) {
+                final pixel = preprocessedImageList[y][x];
+                if (pixel is List && pixel.length == 3) {
+                  final r = (pixel[0] * 255).toInt();
+                  final g = (pixel[1] * 255).toInt();
+                  final b = (pixel[2] * 255).toInt();
+                  image.setPixel(x, y, img.getColor(r, g, b));
+                }
+              }
+            }
+
+            final pngData = img.encodePng(image);
+            _preprocessedImage = Uint8List.fromList(pngData);
+          }
         });
 
         print('Predicted Class: ${data['predicted_class']}');
@@ -81,6 +110,33 @@ class _UploadedImagePageState extends State<UploadedImagePage> {
             false; // Set loading state to false if there's an exception
       });
     }
+  }
+
+  void _showPreprocessedImage() {
+    if (_preprocessedImage == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Preprocessed Image'),
+        content: SizedBox(
+          width: 500, // Set the desired width here
+          height: 400, // Set the desired height here
+          child: Image.memory(
+            _preprocessedImage!,
+            fit: BoxFit.fill, // Ensures the image maintains its aspect ratio
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -164,7 +220,7 @@ class _UploadedImagePageState extends State<UploadedImagePage> {
                         _originalImage != null
                             ? Image.memory(
                                 _originalImage!,
-                                fit: BoxFit.cover,
+                                fit: BoxFit.fill,
                                 width: 300,
                                 height: 300,
                               )
@@ -198,8 +254,7 @@ class _UploadedImagePageState extends State<UploadedImagePage> {
                               ),
                               Positioned(
                                 left: _boundingBox![0] * 300 / 900,
-                                top: (_boundingBox![1] * 300 / 692) -
-                                    20, // Adjust as needed
+                                top: (_boundingBox![1] * 300 / 692) - 20,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 6, vertical: 2),
@@ -244,14 +299,6 @@ class _UploadedImagePageState extends State<UploadedImagePage> {
                             color: Colors.black,
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        Text(
-                          'Confidence: ${(_confidence * 100).toStringAsFixed(2)}%', // Display confidence
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.black54,
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -259,18 +306,16 @@ class _UploadedImagePageState extends State<UploadedImagePage> {
               ],
             ),
           ),
-          if (_predictedClass.isNotEmpty &&
-              !_isLoading) // Show button only if disease is detected and not loading
+          if (_predictedClass.isNotEmpty && !_isLoading)
             Positioned(
-              bottom: 130,
-              right: 125,
+              bottom: 166, // Adjust this value to change the vertical position
+              right: 122, // Adjust this value to change the horizontal position
               child: CustomButton(
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                         builder: (context) =>
-                            // const ChatPage()), // Pass the predicted disease
                             ChatPage(disease: _predictedClass)),
                   );
                 },
@@ -293,6 +338,17 @@ class _UploadedImagePageState extends State<UploadedImagePage> {
                     ),
                   ],
                 ),
+              ),
+            ),
+          if (_predictedClass.isNotEmpty && !_isLoading)
+            Positioned(
+              bottom: 40, // Adjust this value to change the vertical position
+              right: 20, // Adjust this value to change the horizontal position
+              child: FloatingActionButton(
+                onPressed: _showPreprocessedImage, // Call the method here
+                backgroundColor: Colors.green, // Icon for the button
+                tooltip: 'Show Preprocessed Image', // Background color
+                child: const Icon(Icons.image),
               ),
             ),
         ],

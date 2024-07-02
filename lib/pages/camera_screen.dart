@@ -2,10 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:camera/camera.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
+import 'package:http_parser/http_parser.dart';
+import 'package:image/image.dart' as img;
+
+import 'uploaded_image.dart';
 
 class LiveDetectionPage extends StatefulWidget {
   const LiveDetectionPage({super.key});
@@ -26,56 +28,52 @@ class _LiveDetectionPageState extends State<LiveDetectionPage> {
   }
 
   Future<void> _initializeCamera() async {
-    try {
-      final cameras = await availableCameras();
-      final camera = cameras.first;
+    final cameras = await availableCameras();
+    final camera = cameras.first;
 
-      _controller = CameraController(camera, ResolutionPreset.medium);
-      await _controller?.initialize();
-      print('Camera initialized successfully.');
+    _controller = CameraController(camera, ResolutionPreset.medium);
+    await _controller?.initialize();
 
-      _controller?.startImageStream((CameraImage image) {
-        if (!_isProcessing) {
-          _isProcessing = true;
-          _processImage(image).then((_) {
-            _isProcessing = false;
-          }).catchError((e) {
-            print('Error during image processing: $e');
-            _isProcessing = false;
-          });
-        }
-      });
+    _controller?.startImageStream((CameraImage image) {
+      if (!_isProcessing) {
+        _isProcessing = true;
+        _processImage(image).then((_) {
+          _isProcessing = false;
+        });
+      }
+    });
 
-      setState(() {});
-    } catch (e) {
-      print('Error initializing camera: $e');
-    }
+    setState(() {});
   }
 
   Future<void> _processImage(CameraImage image) async {
     try {
-      // Reduce image resolution
-      final WriteBuffer allBytes = WriteBuffer();
-      for (var plane in image.planes) {
-        allBytes.putUint8List(plane.bytes);
-      }
-      final bytes = allBytes.done().buffer.asUint8List();
+      // Convert CameraImage to img.Image
+      final imgImage = img.Image.fromBytes(
+        image.width,
+        image.height,
+        image.planes[0].bytes,
+        format: img.Format.rgb, // Adjust format based on your image data
+      );
 
-      // Save the image to a temporary file
-      final directory = await getTemporaryDirectory();
-      final file = File('${directory.path}/temp_image.jpg');
-      await file.writeAsBytes(bytes);
-      print('Image saved to ${file.path}');
+      // Encode image as JPEG
+      final jpegBytes = img.encodeJpg(imgImage);
 
       // Create a multipart request
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('http://20.54.112.25/predict-image/'),
+        Uri.parse('http://20.54.112.25/live-detection/'),
       );
 
-      // Add the image file to the request
-      request.files.add(await http.MultipartFile.fromPath('file', file.path));
-      print('Sending image to server...');
+      // Add the image file to the request with filename and content type
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'file',
+          jpegBytes,
+          filename: 'upload.jpg',
+          contentType: MediaType('image', 'jpeg'),
+        ),
+      );
 
       // Send the request
       final response = await request.send();
@@ -83,7 +81,7 @@ class _LiveDetectionPageState extends State<LiveDetectionPage> {
 
       // Print response status code and body for debugging
       print('Response status: ${response.statusCode}');
-      // print('Response body: $responseString');
+      print('Response body: $responseString');
 
       if (response.statusCode == 200) {
         final tmp = json.decode(responseString);
@@ -93,18 +91,51 @@ class _LiveDetectionPageState extends State<LiveDetectionPage> {
         print('YOLO Result: $result');
 
         setState(() {
-          _boundingBoxes =
-              result['xyxy']; // Update with your YOLO result format
+          _boundingBoxes = result['Yolo result']['xyxy'];
         });
       } else {
         print('Error: ${response.statusCode}');
       }
-
-      // Delete the temporary file after processing
-      await file.delete();
-      print('Temporary file deleted.');
     } catch (e) {
       print('Error processing image: $e');
+    }
+  }
+
+  Future<void> _captureAndNavigate() async {
+    if (_controller == null || !_controller!.value.isInitialized) {
+      return;
+    }
+
+    setState(() {
+      _isProcessing = true;
+    });
+
+    try {
+      // Stop the image stream
+      await _controller!.stopImageStream();
+
+      // Capture a single image
+      final xFile = await _controller!.takePicture();
+
+      // Optionally, you can also process the image here if needed
+      final imageBytes = await File(xFile.path).readAsBytes();
+
+      // Navigate to UploadedImagePage with the captured image path and detection result
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => UploadedImagePage(
+            imagePath: xFile.path,
+            detectionResult: const {}, // Pass an empty detection result
+          ),
+        ),
+      );
+    } catch (e) {
+      print('Error capturing image: $e');
+    } finally {
+      setState(() {
+        _isProcessing = false;
+      });
     }
   }
 
@@ -121,10 +152,17 @@ class _LiveDetectionPageState extends State<LiveDetectionPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Live Object Detection')),
+      appBar: AppBar(
+        title: const Padding(
+          padding: EdgeInsets.fromLTRB(33, 5, 0, 0),
+          child: Text('Live Object Detection'),
+        ),
+      ),
       body: Stack(
         children: [
-          CameraPreview(_controller!),
+          Positioned.fill(
+            child: CameraPreview(_controller!),
+          ),
           ..._boundingBoxes.map((box) {
             return Positioned(
               left: box[0].toDouble(),
@@ -140,6 +178,11 @@ class _LiveDetectionPageState extends State<LiveDetectionPage> {
           }).toList(),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _isProcessing ? null : _captureAndNavigate,
+        child: const Icon(Icons.camera),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }
