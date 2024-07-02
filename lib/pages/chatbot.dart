@@ -62,7 +62,7 @@ class _ChatPageState extends State<ChatPage> {
           "What is the cure for $plantName plant with $diseaseName disease?";
 
       final cureQuestion = types.TextMessage(
-        author: _assistant,
+        author: _user,
         createdAt: DateTime.now().millisecondsSinceEpoch,
         id: randomString(),
         text: question,
