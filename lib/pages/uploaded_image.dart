@@ -5,7 +5,7 @@ import 'package:flutter_test_1/pages/chatbot.dart';
 import 'package:http/http.dart' as http;
 import 'package:custom_button_builder/custom_button_builder.dart';
 import 'package:zhi_starry_sky/starry_sky.dart';
-import 'package:image/image.dart' as img; // Uncomment this import
+import 'package:image/image.dart' as img;
 import 'dart:io';
 
 class UploadedImagePage extends StatefulWidget {
@@ -22,48 +22,39 @@ class UploadedImagePage extends StatefulWidget {
 }
 
 class _UploadedImagePageState extends State<UploadedImagePage> {
-  String _serverText = ''; // Text to display after loading
-  String _predictedClass = ''; // To hold the predicted class
-  double _confidence = 0.0; // To hold the confidence score
-  Uint8List? _originalImage; // To hold the original image data
-  Uint8List? _preprocessedImage; // To hold the preprocessed image data
-  List<double>? _boundingBox; // To hold the bounding box coordinates
-  bool _isLoading = true; // To track loading state
+  String _serverText = '';
+  String _predictedClass = '';
+  double _confidence = 0.0;
+  Uint8List? _originalImage;
+  Uint8List? _preprocessedImage;
+  List<double>? _boundingBox;
+  bool _isLoading = true;
 
   Future<void> uploadImage() async {
-    final url = Uri.parse(
-        'http://20.54.112.25/predict-image/'); // Replace with your server URL
+    final url = Uri.parse('http://20.54.112.25/model/predict-image/');
 
     try {
       var request = http.MultipartRequest('POST', url);
 
-      // Add the image file to the request
       request.files
           .add(await http.MultipartFile.fromPath('file', widget.imagePath));
 
-      // Send the request
       var response = await request.send();
 
-      // Read the response
       final responseBody = await response.stream.bytesToString();
-
-      // Print the response for debugging
       print('Response Body: $responseBody');
 
       if (response.statusCode == 200) {
         final tmp = json.decode(responseBody);
-
         final data = json.decode(tmp) as Map<String, dynamic>;
 
         setState(() {
           _predictedClass = data['predicted_class'] ?? 'Prediction failed';
-          _confidence =
-              data['Yolo result']['conf'][0] ?? 0.0; // Extract confidence
+          _confidence = data['Yolo result']['conf'][0] ?? 0.0;
           _serverText = _predictedClass;
           _boundingBox = List<double>.from(data['Yolo result']['xyxy'][0]);
-          _isLoading = false; // Set loading state to false when done
+          _isLoading = false;
 
-          // Extract and convert the preprocessed image
           final List<dynamic> preprocessedImageList =
               data['preprocessd image'] ?? [];
           if (preprocessedImageList.isNotEmpty) {
@@ -97,17 +88,15 @@ class _UploadedImagePageState extends State<UploadedImagePage> {
       } else {
         print('Failed to upload image. Status Code: ${response.statusCode}');
         setState(() {
-          _serverText = 'Failed to upload image'; // Handle server error
-          _isLoading =
-              false; // Set loading state to false even if there's an error
+          _serverText = 'Failed to upload image';
+          _isLoading = false;
         });
       }
     } catch (e) {
       print('Exception occurred: $e');
       setState(() {
-        _serverText = 'Failed to connect to server'; // Handle connection error
-        _isLoading =
-            false; // Set loading state to false if there's an exception
+        _serverText = 'Failed to connect to server';
+        _isLoading = false;
       });
     }
   }
@@ -120,11 +109,11 @@ class _UploadedImagePageState extends State<UploadedImagePage> {
       builder: (context) => AlertDialog(
         title: const Text('Preprocessed Image'),
         content: SizedBox(
-          width: 500, // Set the desired width here
-          height: 400, // Set the desired height here
+          width: 500,
+          height: 400,
           child: Image.memory(
             _preprocessedImage!,
-            fit: BoxFit.fill, // Ensures the image maintains its aspect ratio
+            fit: BoxFit.fill,
           ),
         ),
         actions: <Widget>[
@@ -142,9 +131,8 @@ class _UploadedImagePageState extends State<UploadedImagePage> {
   @override
   void initState() {
     super.initState();
-    _originalImage =
-        File(widget.imagePath).readAsBytesSync(); // Load the original image
-    uploadImage(); // Upload image when the page initializes
+    _originalImage = File(widget.imagePath).readAsBytesSync();
+    uploadImage();
   }
 
   @override
@@ -199,7 +187,7 @@ class _UploadedImagePageState extends State<UploadedImagePage> {
       body: Stack(
         children: [
           const Center(
-            child: StarrySkyView(), // Background widget
+            child: StarrySkyView(),
           ),
           Positioned.fill(
             child: Column(
@@ -226,7 +214,7 @@ class _UploadedImagePageState extends State<UploadedImagePage> {
                               )
                             : const Center(
                                 child: Text(
-                                  'No image available', // Fallback text if no image is available
+                                  'No image available',
                                   style: TextStyle(
                                     fontSize: 18,
                                     color: Colors.black54,
@@ -278,7 +266,7 @@ class _UploadedImagePageState extends State<UploadedImagePage> {
                 const SizedBox(height: 50),
                 if (_isLoading)
                   const Center(
-                    child: CircularProgressIndicator(), // Show loading spinner
+                    child: CircularProgressIndicator(),
                   )
                 else if (_serverText.isNotEmpty)
                   Container(
@@ -308,15 +296,21 @@ class _UploadedImagePageState extends State<UploadedImagePage> {
           ),
           if (_predictedClass.isNotEmpty && !_isLoading)
             Positioned(
-              bottom: 166, // Adjust this value to change the vertical position
-              right: 122, // Adjust this value to change the horizontal position
+              bottom: 166,
+              right: 122,
               child: CustomButton(
                 onPressed: () {
+                  // Split the predictedClass string by '__'
+                  final classes = _predictedClass.split('__');
+                  final class1 = classes.isNotEmpty ? classes[0] : '';
+                  final class2 = classes.length > 1 ? classes[1] : '';
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) =>
-                            ChatPage(disease: _predictedClass)),
+                      builder: (context) =>
+                          ChatPage(plantName: class1, diseaseName: class2),
+                    ),
                   );
                 },
                 gradient:
@@ -342,12 +336,12 @@ class _UploadedImagePageState extends State<UploadedImagePage> {
             ),
           if (_predictedClass.isNotEmpty && !_isLoading)
             Positioned(
-              bottom: 40, // Adjust this value to change the vertical position
-              right: 20, // Adjust this value to change the horizontal position
+              bottom: 40,
+              right: 20,
               child: FloatingActionButton(
-                onPressed: _showPreprocessedImage, // Call the method here
-                backgroundColor: Colors.green, // Icon for the button
-                tooltip: 'Show Preprocessed Image', // Background color
+                onPressed: _showPreprocessedImage,
+                backgroundColor: Colors.green,
+                tooltip: 'Show Preprocessed Image',
                 child: const Icon(Icons.image),
               ),
             ),

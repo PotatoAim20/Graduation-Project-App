@@ -62,7 +62,7 @@ class _LiveDetectionPageState extends State<LiveDetectionPage> {
       // Create a multipart request
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('http://20.54.112.25/live-detection/'),
+        Uri.parse('http://20.54.112.25/model/live-detection/'),
       );
 
       // Add the image file to the request with filename and content type

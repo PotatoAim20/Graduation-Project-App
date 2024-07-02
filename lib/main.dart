@@ -209,7 +209,8 @@ class HomePage extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                       builder: (context) => const ChatPage(
-                            disease: '',
+                            plantName: '',
+                            diseaseName: '',
                           )),
                 );
               },
