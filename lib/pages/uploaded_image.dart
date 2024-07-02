@@ -29,6 +29,8 @@ class _UploadedImagePageState extends State<UploadedImagePage> {
   Uint8List? _preprocessedImage;
   List<double>? _boundingBox;
   bool _isLoading = true;
+  late int _originalHeight;
+  late int _originalWidth;
 
   Future<void> uploadImage() async {
     final url = Uri.parse('http://20.54.112.25/model/predict-image/');
@@ -53,6 +55,8 @@ class _UploadedImagePageState extends State<UploadedImagePage> {
           _confidence = data['Yolo result']['conf'][0] ?? 0.0;
           _serverText = _predictedClass;
           _boundingBox = List<double>.from(data['Yolo result']['xyxy'][0]);
+          _originalHeight = data['orig_shape'][0];
+          _originalWidth = data['orig_shape'][1];
           _isLoading = false;
 
           final List<dynamic> preprocessedImageList =
@@ -225,14 +229,14 @@ class _UploadedImagePageState extends State<UploadedImagePage> {
                           Stack(
                             children: [
                               Positioned(
-                                left: _boundingBox![0] * 300 / 900,
-                                top: _boundingBox![1] * 300 / 692,
+                                left: _boundingBox![0] * 300 / _originalWidth,
+                                top: _boundingBox![1] * 300 / _originalHeight,
                                 width: (_boundingBox![2] - _boundingBox![0]) *
                                     300 /
-                                    900,
+                                    _originalWidth,
                                 height: (_boundingBox![3] - _boundingBox![1]) *
                                     300 /
-                                    692,
+                                    _originalHeight,
                                 child: Container(
                                   decoration: BoxDecoration(
                                     border:
