@@ -302,14 +302,14 @@ class _UploadedImagePageState extends State<UploadedImagePage> {
                 onPressed: () {
                   // Split the predictedClass string by '__'
                   final classes = _predictedClass.split('__');
-                  final class1 = classes.isNotEmpty ? classes[0] : '';
-                  final class2 = classes.length > 1 ? classes[1] : '';
+                  final plantName = classes.isNotEmpty ? classes[0] : '';
+                  final diseaseName = classes.length > 1 ? classes[1] : '';
 
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          ChatPage(plantName: class1, diseaseName: class2),
+                      builder: (context) => ChatPage(
+                          plantName: plantName, diseaseName: diseaseName),
                     ),
                   );
                 },

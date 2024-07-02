@@ -207,11 +207,7 @@ class HomePage extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                      builder: (context) => const ChatPage(
-                            plantName: '',
-                            diseaseName: '',
-                          )),
+                  MaterialPageRoute(builder: (context) => const ChatPage()),
                 );
               },
               backgroundColor: Colors.transparent,

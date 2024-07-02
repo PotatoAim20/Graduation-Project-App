@@ -19,14 +19,14 @@ String randomString() {
 }
 
 class ChatPage extends StatefulWidget {
-  final String disease; // Add this parameter to receive disease information
+  final String? plantName;
+  final String? diseaseName;
 
-  const ChatPage({super.key,  required String plantName, required String diseaseName});
+  const ChatPage({super.key, this.plantName, this.diseaseName});
 
   @override
   State<ChatPage> createState() => _ChatPageState();
 }
-
 
 class _ChatPageState extends State<ChatPage> {
   final List<types.Message> _messages = [];
@@ -34,6 +34,97 @@ class _ChatPageState extends State<ChatPage> {
       id: '82091008-a484-4a89-ae75-a22bf8d6f3ac', firstName: 'User');
   final _assistant = const types.User(
       id: '82091008-a484-4a89-ae75-a22bf8d6f3ab', firstName: 'Assistant');
+
+  Future<String> askQuestion(String message) async {
+    final url = Uri.parse('http://20.54.112.25/chatbot/ask-question');
+    final res = await http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        "user_question": message,
+      }),
+    );
+
+    if (res.statusCode == 200 || res.statusCode == 201) {
+      print('Response data: ${res.body}');
+      return res.body;
+    } else {
+      print('Failed to send POST request. Status code: ${res.statusCode}');
+      return "";
+    }
+  }
+
+  void getCure(plantName, diseaseName) async {
+    setState(() {
+      final question =
+          "What is the cure for $plantName plant with $diseaseName disease?";
+
+      final cureQuestion = types.TextMessage(
+        author: _assistant,
+        createdAt: DateTime.now().millisecondsSinceEpoch,
+        id: randomString(),
+        text: question,
+      );
+
+      _messages.add(cureQuestion);
+    });
+    final url = Uri.parse('http://20.54.112.25/chatbot/get-cure');
+    final res = await http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        "plantName": plantName,
+        "diseaseName": diseaseName,
+      }),
+    );
+
+    if (res.statusCode == 200 || res.statusCode == 201) {
+      print('Response data: ${res.body}');
+      setState(() {
+        final cureAnswer = types.TextMessage(
+          author: _assistant,
+          createdAt: DateTime.now().millisecondsSinceEpoch,
+          id: randomString(),
+          text: res.body,
+        );
+
+        _messages.add(cureAnswer);
+      });
+    } else {
+      print('Failed to send POST request. Status code: ${res.statusCode}');
+    }
+  }
+
+  void clearHistory() async {
+    final url = Uri.parse('http://20.54.112.25/chatbot/clear-history');
+    final res = await http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+    );
+
+    if (res.statusCode == 200 || res.statusCode == 201) {
+      setState(() {
+        _messages.clear();
+      });
+    } else {
+      print('Failed to send POST request. Status code: ${res.statusCode}');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.diseaseName != null && widget.plantName != null) {
+      getCure(widget.plantName, widget.diseaseName);
+    }
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -83,10 +174,7 @@ class _ChatPageState extends State<ChatPage> {
                     color: Colors.black54,
                   ),
                   onPressed: () {
-                    // todo: clear history using api
-                    setState(() {
-                      _messages.clear();
-                    });
+                    clearHistory();
                   },
                 ),
                 const SizedBox(width: 10),
@@ -96,7 +184,7 @@ class _ChatPageState extends State<ChatPage> {
         ),
         body: Chat(
           messages: _messages,
-          onAttachmentPressed: _handleAttachmentPressed,
+          // onAttachmentPressed: _handleAttachmentPressed,
           onMessageTap: _handleMessageTap,
           onPreviewDataFetched: _handlePreviewDataFetched,
           onSendPressed: _handleSendPressed,
@@ -268,8 +356,7 @@ class _ChatPageState extends State<ChatPage> {
 
     _addMessage(textMessage);
 
-    // String assistantRes = await sendMessageModel(message);
-    String assistantRes = "Hi I'm robot";
+    String assistantRes = await askQuestion(textMessage.text);
     final textMessage2 = types.TextMessage(
       author: _assistant,
       createdAt: DateTime.now().millisecondsSinceEpoch,
