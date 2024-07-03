@@ -29,7 +29,7 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
-  final List<types.Message> _messages = [];
+  List<types.Message> _messages = [];
   final _user = const types.User(
       id: '82091008-a484-4a89-ae75-a22bf8d6f3ac', firstName: 'User');
   final _assistant = const types.User(
@@ -93,6 +93,7 @@ class _ChatPageState extends State<ChatPage> {
         );
 
         _messages.add(cureAnswer);
+        _messages = _messages.reversed.toList();
       });
     } else {
       print('Failed to send POST request. Status code: ${res.statusCode}');
