@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test_1/pages/chatbot.dart';
+import 'package:flutter_test_1/pages/segment_image.dart';
 import 'package:flutter_test_1/pages/uploaded_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:easy_dynamic_theme/easy_dynamic_theme.dart';
@@ -60,6 +61,26 @@ class HomePage extends StatelessWidget {
     }
   }
 
+  Future<void> _selectImageForSegmentation(BuildContext context) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      // Navigate to UploadedImagePage with the selected image path
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SegmentImagePage(
+            imagePath: pickedFile.path,
+            detectionResult: {},
+          ),
+        ),
+      );
+    } else {
+      print('No image selected.');
+    }
+  }
+
   void _toggleTheme(BuildContext context) {
     EasyDynamicTheme.of(context).changeTheme();
   }
@@ -109,7 +130,7 @@ class HomePage extends StatelessWidget {
               alignment: Alignment.center,
               children: [
                 Positioned(
-                  top: 200,
+                  top: 100,
                   child: CustomButton(
                     onPressed: () {
                       _captureImage(context);
@@ -137,7 +158,7 @@ class HomePage extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  bottom: 250,
+                  top: 250,
                   child: CustomButton(
                     onPressed: () {
                       _selectImageFromGallery(context);
@@ -158,6 +179,34 @@ class HomePage extends StatelessWidget {
                         SizedBox(width: 10),
                         Text(
                           'Upload Image',
+                          style: TextStyle(color: Colors.white, fontSize: 20),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 400,
+                  child: CustomButton(
+                    onPressed: () {
+                      _selectImageForSegmentation(context);
+                    },
+                    gradient:
+                        const LinearGradient(colors: [Colors.blue, Colors.red]),
+                    width: 250,
+                    height: 100,
+                    borderRadius: 12,
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.upload,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                        SizedBox(width: 10),
+                        Text(
+                          'Segment Image',
                           style: TextStyle(color: Colors.white, fontSize: 20),
                         ),
                       ],
