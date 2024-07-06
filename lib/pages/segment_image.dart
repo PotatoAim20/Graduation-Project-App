@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test_1/pages/chatbot.dart';
 import 'package:http/http.dart' as http;
 import 'package:custom_button_builder/custom_button_builder.dart';
+import 'package:zhi_starry_sky/starry_sky.dart';
 import 'package:image/image.dart' as img;
 import 'dart:io';
 
@@ -40,26 +41,18 @@ class _SegmentImagePageState extends State<SegmentImagePage> {
       request.files
           .add(await http.MultipartFile.fromPath('file', widget.imagePath));
 
-      var response = await request.send();
+      var streamedResponse = await request.send();
 
-      // var response = await http.Response.fromStream(streamedResponse);
-      final responseBody = await response.stream.bytesToString();
+      final responseBody = await streamedResponse.stream.bytesToString();
 
-      if (response.statusCode == 200) {
-        final tmp = json.decode(responseBody);
-        final data = json.decode(tmp) as Map<String, dynamic>;
+      if (streamedResponse.statusCode == 200) {
+        final body = responseBody;
+        final data = json.decode(body);
 
         setState(() {
-          // final _image = data['Photo'];
-          // _predictedClass = data['predicted_class'] ?? 'Prediction failed';
-          // _confidence = data['Yolo result']['conf'][0] ?? 0.0;
-          // _serverText = _predictedClass;
-          // _boundingBox = List<double>.from(data['Yolo result']['xyxy'][0]);
-          // _originalHeight = data['orig_shape'][0];
-          // _originalWidth = data['orig_shape'][1];
           _isLoading = false;
-
-          final List<dynamic> preprocessedImageList = data['Photo'] ?? [];
+          final List<dynamic> preprocessedImageList =
+              jsonDecode(data)['Photo'] ?? [];
           if (preprocessedImageList.isNotEmpty) {
             final int height = preprocessedImageList.length;
             final int width = preprocessedImageList.isNotEmpty
@@ -72,9 +65,9 @@ class _SegmentImagePageState extends State<SegmentImagePage> {
               for (int x = 0; x < width; x++) {
                 final pixel = preprocessedImageList[y][x];
                 if (pixel is List && pixel.length == 3) {
-                  final r = (pixel[0] * 255).toInt();
-                  final g = (pixel[1] * 255).toInt();
-                  final b = (pixel[2] * 255).toInt();
+                  final r = (pixel[0]).toInt();
+                  final g = (pixel[1]).toInt();
+                  final b = (pixel[2]).toInt();
                   image.setPixel(x, y, img.getColor(r, g, b));
                 }
               }
@@ -85,7 +78,8 @@ class _SegmentImagePageState extends State<SegmentImagePage> {
           }
         });
       } else {
-        print('Failed to upload image. Status Code: ${response.statusCode}');
+        print(
+            'Failed to upload image. Status Code: ${streamedResponse.statusCode}');
         setState(() {
           _serverText = 'Failed to upload image';
           _isLoading = false;
@@ -333,7 +327,7 @@ class _SegmentImagePageState extends State<SegmentImagePage> {
                 ),
               ),
             ),
-          if (_predictedClass.isNotEmpty && !_isLoading)
+          if (_preprocessedImage != null && !_isLoading)
             Positioned(
               bottom: 40,
               right: 20,
