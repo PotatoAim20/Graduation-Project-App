@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test_1/pages/chatbot.dart';
 import 'package:http/http.dart' as http;
 import 'package:custom_button_builder/custom_button_builder.dart';
-import 'package:zhi_starry_sky/starry_sky.dart';
 import 'package:image/image.dart' as img;
 import 'dart:io';
 
@@ -43,54 +42,48 @@ class _SegmentImagePageState extends State<SegmentImagePage> {
 
       var response = await request.send();
 
+      // var response = await http.Response.fromStream(streamedResponse);
       final responseBody = await response.stream.bytesToString();
-      print('Response Body: $responseBody');
 
       if (response.statusCode == 200) {
         final tmp = json.decode(responseBody);
-        print(tmp);
+        final data = json.decode(tmp) as Map<String, dynamic>;
 
-        // final data = json.decode(tmp) as Map<String, dynamic>;
+        setState(() {
+          // final _image = data['Photo'];
+          // _predictedClass = data['predicted_class'] ?? 'Prediction failed';
+          // _confidence = data['Yolo result']['conf'][0] ?? 0.0;
+          // _serverText = _predictedClass;
+          // _boundingBox = List<double>.from(data['Yolo result']['xyxy'][0]);
+          // _originalHeight = data['orig_shape'][0];
+          // _originalWidth = data['orig_shape'][1];
+          // _isLoading = false;
 
-        // setState(() {
-        //   _predictedClass = data['predicted_class'] ?? 'Prediction failed';
-        //   _confidence = data['Yolo result']['conf'][0] ?? 0.0;
-        //   _serverText = _predictedClass;
-        //   _boundingBox = List<double>.from(data['Yolo result']['xyxy'][0]);
-        //   _originalHeight = data['orig_shape'][0];
-        //   _originalWidth = data['orig_shape'][1];
-        //   _isLoading = false;
+          final List<dynamic> preprocessedImageList = data['Photo'] ?? [];
+          if (preprocessedImageList.isNotEmpty) {
+            final int height = preprocessedImageList.length;
+            final int width = preprocessedImageList.isNotEmpty
+                ? preprocessedImageList[0].length
+                : 0;
 
-        //   final List<dynamic> preprocessedImageList =
-        //       data['preprocessd image'] ?? [];
-        //   if (preprocessedImageList.isNotEmpty) {
-        //     final int height = preprocessedImageList.length;
-        //     final int width = preprocessedImageList.isNotEmpty
-        //         ? preprocessedImageList[0].length
-        //         : 0;
+            final img.Image image = img.Image(width, height);
 
-        //     final img.Image image = img.Image(width, height);
+            for (int y = 0; y < height; y++) {
+              for (int x = 0; x < width; x++) {
+                final pixel = preprocessedImageList[y][x];
+                if (pixel is List && pixel.length == 3) {
+                  final r = (pixel[0] * 255).toInt();
+                  final g = (pixel[1] * 255).toInt();
+                  final b = (pixel[2] * 255).toInt();
+                  image.setPixel(x, y, img.getColor(r, g, b));
+                }
+              }
+            }
 
-        //     for (int y = 0; y < height; y++) {
-        //       for (int x = 0; x < width; x++) {
-        //         final pixel = preprocessedImageList[y][x];
-        //         if (pixel is List && pixel.length == 3) {
-        //           final r = (pixel[0] * 255).toInt();
-        //           final g = (pixel[1] * 255).toInt();
-        //           final b = (pixel[2] * 255).toInt();
-        //           image.setPixel(x, y, img.getColor(r, g, b));
-        //         }
-        //       }
-        //     }
-
-        //     final pngData = img.encodePng(image);
-        //     _preprocessedImage = Uint8List.fromList(pngData);
-        //   }
-        // });
-
-        // print('Predicted Class: ${data['predicted_class']}');
-        // print('Confidence: ${data['Yolo result']['conf'][0]}');
-        // print('YOLO Result: ${data['Yolo result']}');
+            final pngData = img.encodePng(image);
+            _preprocessedImage = Uint8List.fromList(pngData);
+          }
+        });
       } else {
         print('Failed to upload image. Status Code: ${response.statusCode}');
         setState(() {
@@ -192,9 +185,9 @@ class _SegmentImagePageState extends State<SegmentImagePage> {
       ),
       body: Stack(
         children: [
-          const Center(
-            child: StarrySkyView(),
-          ),
+          // const Center(
+          //   child: StarrySkyView(),
+          // ),
           Positioned.fill(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,

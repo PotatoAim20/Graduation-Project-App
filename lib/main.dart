@@ -122,9 +122,9 @@ class HomePage extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          const Center(
-            child: StarrySkyView(), // background widget
-          ),
+          // const Center(
+          //   child: StarrySkyView(), // background widget
+          // ),
           Center(
             child: Stack(
               alignment: Alignment.center,

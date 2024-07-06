@@ -190,9 +190,9 @@ class _UploadedImagePageState extends State<UploadedImagePage> {
       ),
       body: Stack(
         children: [
-          const Center(
-            child: StarrySkyView(),
-          ),
+          // const Center(
+          //   child: StarrySkyView(),
+          // ),
           Positioned.fill(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
