@@ -57,7 +57,7 @@ class _SegmentImagePageState extends State<SegmentImagePage> {
           // _boundingBox = List<double>.from(data['Yolo result']['xyxy'][0]);
           // _originalHeight = data['orig_shape'][0];
           // _originalWidth = data['orig_shape'][1];
-          // _isLoading = false;
+          _isLoading = false;
 
           final List<dynamic> preprocessedImageList = data['Photo'] ?? [];
           if (preprocessedImageList.isNotEmpty) {
