@@ -53,6 +53,7 @@ class _SegmentImagePageState extends State<SegmentImagePage> {
           _isLoading = false;
           final List<dynamic> preprocessedImageList =
               jsonDecode(data)['Photo'] ?? [];
+
           if (preprocessedImageList.isNotEmpty) {
             final int height = preprocessedImageList.length;
             final int width = preprocessedImageList.isNotEmpty
@@ -61,19 +62,24 @@ class _SegmentImagePageState extends State<SegmentImagePage> {
 
             final img.Image image = img.Image(width, height);
 
+            // Populate image with RGB values from preprocessedImageList
             for (int y = 0; y < height; y++) {
               for (int x = 0; x < width; x++) {
-                final pixel = preprocessedImageList[y][x];
-                if (pixel is List && pixel.length == 3) {
-                  final r = (pixel[0]).toInt();
-                  final g = (pixel[1]).toInt();
-                  final b = (pixel[2]).toInt();
-                  image.setPixel(x, y, img.getColor(r, g, b));
-                }
+                List<dynamic> rgb = preprocessedImageList[y][x];
+                int red = rgb[0];
+                int green = rgb[1];
+                int blue = rgb[2];
+                int alpha = 255; // Assuming fully opaque
+
+                // Set pixel color in the image
+                image.setPixel(y, x, img.getColor(red, green, blue, alpha));
               }
             }
 
+            // Encode image as PNG
             final pngData = img.encodePng(image);
+
+            // Convert to Uint8List
             _preprocessedImage = Uint8List.fromList(pngData);
           }
         });
