@@ -45,13 +45,14 @@ class _ObjectDetectionPageState extends State<ObjectDetectionPage> {
       var response = await request.send();
 
       final responseBody = await response.stream.bytesToString();
+
       print('Response Body: $responseBody');
 
       if (response.statusCode == 200) {
         final data = json.decode(responseBody) as Map<String, dynamic>;
 
         setState(() {
-          _predictedClass = data['predicted_class'] ?? 'Prediction failed';
+          _predictedClass = data['predicted_class'] ?? 'No Plant Detected';
           _predictedClass = formatPredictedClass(_predictedClass);
           _serverText = _predictedClass;
           _confidence = data['Yolo result']['conf'][0] ?? 0.0;
@@ -208,8 +209,8 @@ class _ObjectDetectionPageState extends State<ObjectDetectionPage> {
               children: [
                 Container(
                   margin: const EdgeInsets.only(top: 20, left: 0),
-                  width: 300,
-                  height: 300,
+                  width: 350,
+                  height: 350,
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.blue, width: 2),
                     borderRadius: BorderRadius.circular(12),
@@ -222,8 +223,8 @@ class _ObjectDetectionPageState extends State<ObjectDetectionPage> {
                             ? Image.memory(
                                 _originalImage!,
                                 fit: BoxFit.fill,
-                                width: 300,
-                                height: 300,
+                                width: 350,
+                                height: 350,
                               )
                             : const Center(
                                 child: Text(
@@ -238,13 +239,13 @@ class _ObjectDetectionPageState extends State<ObjectDetectionPage> {
                           Stack(
                             children: [
                               Positioned(
-                                left: _boundingBox![0] * 300 / _originalWidth,
-                                top: _boundingBox![1] * 300 / _originalHeight,
+                                left: _boundingBox![0] * 350 / _originalWidth,
+                                top: _boundingBox![1] * 350 / _originalHeight,
                                 width: (_boundingBox![2] - _boundingBox![0]) *
-                                    300 /
+                                    350 /
                                     _originalWidth,
                                 height: (_boundingBox![3] - _boundingBox![1]) *
-                                    300 /
+                                    350 /
                                     _originalHeight,
                                 child: Container(
                                   decoration: BoxDecoration(
@@ -254,9 +255,9 @@ class _ObjectDetectionPageState extends State<ObjectDetectionPage> {
                                 ),
                               ),
                               Positioned(
-                                left: _boundingBox![0] * 300 / _originalWidth,
+                                left: _boundingBox![0] * 350 / _originalWidth,
                                 top:
-                                    (_boundingBox![1] * 300 / _originalHeight) -
+                                    (_boundingBox![1] * 350 / _originalHeight) -
                                         20,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
@@ -309,9 +310,9 @@ class _ObjectDetectionPageState extends State<ObjectDetectionPage> {
               ],
             ),
           ),
-          if (_predictedClass.isNotEmpty && !_isLoading)
+          if (_predictedClass != 'No Plant Detected' && !_isLoading)
             Positioned(
-              bottom: 166,
+              bottom: 140,
               right: 122,
               child: CustomButton(
                 onPressed: () {
@@ -349,7 +350,7 @@ class _ObjectDetectionPageState extends State<ObjectDetectionPage> {
                 ),
               ),
             ),
-          if (_predictedClass.isNotEmpty && !_isLoading)
+          if (_predictedClass != 'No Plant Detected' && !_isLoading)
             Positioned(
               bottom: 40,
               right: 20,

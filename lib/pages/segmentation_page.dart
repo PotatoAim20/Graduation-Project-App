@@ -50,7 +50,7 @@ class _SegmentationPageState extends State<SegmentationPage> {
         final data = json.decode(responseBody) as Map<String, dynamic>;
 
         setState(() {
-          _predictedClass = data['predicted_class'][0] ?? 'Prediction failed';
+          _predictedClass = data['predicted_class'][0] ?? 'No Plant Detected';
           _predictedClass = formatPredictedClass(_predictedClass);
           _serverText = _predictedClass;
           _isLoading = false;
@@ -93,7 +93,7 @@ class _SegmentationPageState extends State<SegmentationPage> {
     } catch (e) {
       print('Exception occurred: $e');
       setState(() {
-        _serverText = 'Failed to connect to server';
+        _serverText = 'No Plant Detected';
         _isLoading = false;
       });
     }
@@ -172,8 +172,8 @@ class _SegmentationPageState extends State<SegmentationPage> {
               children: [
                 Container(
                   margin: const EdgeInsets.only(top: 20, left: 0),
-                  width: 300,
-                  height: 300,
+                  width: 350,
+                  height: 350,
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.blue, width: 2),
                     borderRadius: BorderRadius.circular(12),
@@ -186,26 +186,23 @@ class _SegmentationPageState extends State<SegmentationPage> {
                           Image.memory(
                             _originalImage!,
                             fit: BoxFit.fill,
-                            width: 300,
-                            height: 300,
+                            width: 350,
+                            height: 350,
                           )
                         else if (_segmentedImage != null)
                           Image.memory(
                             _segmentedImage!,
                             fit: BoxFit.fill,
-                            width: 300,
-                            height: 300,
+                            width: 350,
+                            height: 350,
                           )
                         else
-                          const Center(
-                            child: Text(
-                              'No image available',
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.black54,
-                              ),
-                            ),
-                          ),
+                          Image.memory(
+                            _originalImage!,
+                            fit: BoxFit.fill,
+                            width: 350,
+                            height: 350,
+                          )
                       ],
                     ),
                   ),
@@ -243,7 +240,7 @@ class _SegmentationPageState extends State<SegmentationPage> {
           ),
           if (_predictedClass.isNotEmpty && !_isLoading)
             Positioned(
-              bottom: 166,
+              bottom: 140,
               right: 122,
               child: CustomButton(
                 onPressed: () {
