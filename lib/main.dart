@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test_1/pages/chatbot.dart';
-import 'package:flutter_test_1/pages/uploaded_image.dart';
+import 'package:flutter_test_1/pages/object_detection_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:easy_dynamic_theme/easy_dynamic_theme.dart';
 import 'package:zhi_starry_sky/starry_sky.dart';
 import 'package:custom_button_builder/custom_button_builder.dart';
 
-import 'pages/camera_screen.dart';
+import 'pages/choice_page.dart';
 
 void main() {
   runApp(EasyDynamicThemeWidget(child: const MyApp()));
@@ -32,12 +32,24 @@ class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   Future<void> _captureImage(BuildContext context) async {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const LiveDetectionPage(),
-      ),
-    );
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.camera);
+
+    if (pickedFile != null) {
+      // Navigate to UploadedImagePage with the captured image path
+      Navigator.push(
+        // ignore: use_build_context_synchronously
+        context,
+        MaterialPageRoute(
+          builder: (context) => ObjectDetectionPage(
+            imagePath: pickedFile.path,
+            detectionResult: const {},
+          ),
+        ),
+      );
+    } else {
+      print('No image captured.');
+    }
   }
 
   Future<void> _selectImageFromGallery(BuildContext context) async {
@@ -45,14 +57,12 @@ class HomePage extends StatelessWidget {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
-      // Navigate to UploadedImagePage with the selected image path
+      // Navigate to ChoicePage with the selected image path
       Navigator.push(
+        // ignore: use_build_context_synchronously
         context,
         MaterialPageRoute(
-          builder: (context) => UploadedImagePage(
-            imagePath: pickedFile.path,
-            detectionResult: {},
-          ),
+          builder: (context) => ChoicePage(imagePath: pickedFile.path),
         ),
       );
     } else {
@@ -85,8 +95,7 @@ class HomePage extends StatelessWidget {
               bottom: Radius.circular(50), // Adjust the radius as needed
             ),
           ),
-          padding: const EdgeInsets.only(
-              top: 20.0), // Adjust the top padding as needed
+          padding: const EdgeInsets.only(top: 20.0),
           child: const Center(
             child: Text(
               'Home',
