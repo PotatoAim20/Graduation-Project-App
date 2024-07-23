@@ -199,9 +199,9 @@ class _ObjectDetectionPageState extends State<ObjectDetectionPage> {
       ),
       body: Stack(
         children: [
-          // const Center(
-          //   child: StarrySkyView(),
-          // ),
+          const Center(
+            child: StarrySkyView(),
+          ),
           Positioned.fill(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
