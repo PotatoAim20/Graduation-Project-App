@@ -8,21 +8,20 @@ import 'package:zhi_starry_sky/starry_sky.dart';
 import 'package:image/image.dart' as img;
 import 'dart:io';
 
-class ObjectDetectionPage extends StatefulWidget {
+class SegmentImagePage extends StatefulWidget {
   final String imagePath;
 
-  const ObjectDetectionPage({
+  const SegmentImagePage({
     super.key,
     required this.imagePath,
     required Map detectionResult,
   });
 
   @override
-  // ignore: library_private_types_in_public_api
-  _ObjectDetectionPageState createState() => _ObjectDetectionPageState();
+  _SegmentImagePageState createState() => _SegmentImagePageState();
 }
 
-class _ObjectDetectionPageState extends State<ObjectDetectionPage> {
+class _SegmentImagePageState extends State<SegmentImagePage> {
   String _serverText = '';
   String _predictedClass = '';
   double _confidence = 0.0;
@@ -34,7 +33,7 @@ class _ObjectDetectionPageState extends State<ObjectDetectionPage> {
   late int _originalWidth;
 
   Future<void> uploadImage() async {
-    final url = Uri.parse('http://20.54.112.25/model/predict-image/');
+    final url = Uri.parse('http://20.54.112.25/model/segment/');
 
     try {
       var request = http.MultipartRequest('POST', url);
@@ -42,27 +41,18 @@ class _ObjectDetectionPageState extends State<ObjectDetectionPage> {
       request.files
           .add(await http.MultipartFile.fromPath('file', widget.imagePath));
 
-      var response = await request.send();
+      var streamedResponse = await request.send();
 
-      final responseBody = await response.stream.bytesToString();
-      print('Response Body: $responseBody');
+      final responseBody = await streamedResponse.stream.bytesToString();
 
-      if (response.statusCode == 200) {
-        final data = json.decode(responseBody) as Map<String, dynamic>;
+      if (streamedResponse.statusCode == 200) {
+        final body = responseBody;
+        final data = json.decode(body);
 
         setState(() {
-          _predictedClass = data['predicted_class'] ?? 'Prediction failed';
-          _predictedClass = formatPredictedClass(_predictedClass);
-          _serverText = _predictedClass;
-          _confidence = data['Yolo result']['conf'][0] ?? 0.0;
-          _serverText = _predictedClass;
-          _boundingBox = List<double>.from(data['Yolo result']['xyxy'][0]);
-          _originalHeight = data['orig_shape'][0];
-          _originalWidth = data['orig_shape'][1];
           _isLoading = false;
-
           final List<dynamic> preprocessedImageList =
-              data['preprocessd image'] ?? [];
+              jsonDecode(data)['Photo'] ?? [];
 
           if (preprocessedImageList.isNotEmpty) {
             final int height = preprocessedImageList.length;
@@ -72,28 +62,30 @@ class _ObjectDetectionPageState extends State<ObjectDetectionPage> {
 
             final img.Image image = img.Image(width, height);
 
+            // Populate image with RGB values from preprocessedImageList
             for (int y = 0; y < height; y++) {
               for (int x = 0; x < width; x++) {
-                final pixel = preprocessedImageList[y][x];
-                if (pixel is List && pixel.length == 3) {
-                  final r = (pixel[0] * 255).toInt();
-                  final g = (pixel[1] * 255).toInt();
-                  final b = (pixel[2] * 255).toInt();
-                  image.setPixel(x, y, img.getColor(r, g, b));
-                }
+                List<dynamic> rgb = preprocessedImageList[y][x];
+                int red = rgb[0];
+                int green = rgb[1];
+                int blue = rgb[2];
+                int alpha = 255; // Assuming fully opaque
+
+                // Set pixel color in the image
+                image.setPixel(y, x, img.getColor(red, green, blue, alpha));
               }
             }
 
+            // Encode image as PNG
             final pngData = img.encodePng(image);
+
+            // Convert to Uint8List
             _preprocessedImage = Uint8List.fromList(pngData);
           }
         });
-
-        print('Predicted Class: ${data['predicted_class']}');
-        print('Confidence: ${data['Yolo result']['conf'][0]}');
-        print('YOLO Result: ${data['Yolo result']}');
       } else {
-        print('Failed to upload image. Status Code: ${response.statusCode}');
+        print(
+            'Failed to upload image. Status Code: ${streamedResponse.statusCode}');
         setState(() {
           _serverText = 'Failed to upload image';
           _isLoading = false;
@@ -133,12 +125,6 @@ class _ObjectDetectionPageState extends State<ObjectDetectionPage> {
         ],
       ),
     );
-  }
-
-  String formatPredictedClass(String predictedClass) {
-    final parts = predictedClass.split(RegExp(r'_+'));
-    final formattedClass = parts.join(' ');
-    return formattedClass;
   }
 
   @override
@@ -254,10 +240,8 @@ class _ObjectDetectionPageState extends State<ObjectDetectionPage> {
                                 ),
                               ),
                               Positioned(
-                                left: _boundingBox![0] * 300 / _originalWidth,
-                                top:
-                                    (_boundingBox![1] * 300 / _originalHeight) -
-                                        20,
+                                left: _boundingBox![0] * 300 / 900,
+                                top: (_boundingBox![1] * 300 / 692) - 20,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 6, vertical: 2),
@@ -315,10 +299,10 @@ class _ObjectDetectionPageState extends State<ObjectDetectionPage> {
               right: 122,
               child: CustomButton(
                 onPressed: () {
-                  final parts = _predictedClass.split(' ');
-                  final plantName = parts.isNotEmpty ? parts[0] : '';
-                  final diseaseName =
-                      parts.length > 1 ? parts.sublist(1).join(' ') : '';
+                  // Split the predictedClass string by '__'
+                  final classes = _predictedClass.split('__');
+                  final plantName = classes.isNotEmpty ? classes[0] : '';
+                  final diseaseName = classes.length > 1 ? classes[1] : '';
 
                   Navigator.push(
                     context,
@@ -349,7 +333,7 @@ class _ObjectDetectionPageState extends State<ObjectDetectionPage> {
                 ),
               ),
             ),
-          if (_predictedClass.isNotEmpty && !_isLoading)
+          if (_preprocessedImage != null && !_isLoading)
             Positioned(
               bottom: 40,
               right: 20,

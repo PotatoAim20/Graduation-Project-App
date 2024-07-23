@@ -38,7 +38,6 @@ class HomePage extends StatelessWidget {
     if (pickedFile != null) {
       // Navigate to UploadedImagePage with the captured image path
       Navigator.push(
-        // ignore: use_build_context_synchronously
         context,
         MaterialPageRoute(
           builder: (context) => ObjectDetectionPage(
@@ -59,7 +58,6 @@ class HomePage extends StatelessWidget {
     if (pickedFile != null) {
       // Navigate to ChoicePage with the selected image path
       Navigator.push(
-        // ignore: use_build_context_synchronously
         context,
         MaterialPageRoute(
           builder: (context) => ChoicePage(imagePath: pickedFile.path),
