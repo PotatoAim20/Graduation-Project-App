@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_test_1/pages/chatbot.dart';
-import 'package:flutter_test_1/pages/object_detection_page.dart';
+import 'package:zr3ty/pages/chatbot.dart';
+import 'package:zr3ty/pages/object_detection_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:easy_dynamic_theme/easy_dynamic_theme.dart';
 import 'package:zhi_starry_sky/starry_sky.dart';
@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'My App',
+      title: 'Zr3ty',
       theme: ThemeData.light(),
       darkTheme: ThemeData.dark(),
       themeMode: EasyDynamicTheme.of(context).themeMode,

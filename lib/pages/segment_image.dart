@@ -1,10 +1,9 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:flutter_test_1/pages/chatbot.dart';
+import 'package:zr3ty/pages/chatbot.dart';
 import 'package:http/http.dart' as http;
 import 'package:custom_button_builder/custom_button_builder.dart';
-import 'package:zhi_starry_sky/starry_sky.dart';
 import 'package:image/image.dart' as img;
 import 'dart:io';
 
